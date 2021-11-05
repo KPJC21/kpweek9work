@@ -11,7 +11,7 @@ import {
     Divider,
     Link,
 } from "@chakra-ui/react";
-import { AddIcon, DeleteIcon, StarIcon, CalendarIcon, PhoneIcon, EditIcon } from "@chakra-ui/icons"
+import { AddIcon } from "@chakra-ui/icons";
 import { useAuthUser, withAuthUser, withAuthUserTokenSSR, AuthAction } from 'next-firebase-auth';
 import { getFirebaseAdmin } from 'next-firebase-auth';
 import firebase from 'firebase/app';
@@ -19,26 +19,29 @@ import 'firebase/firestore';
 import NewHeader from '../../components/NewHeader';
 
 
-
-
 const SingleEvent = ({itemData}) => {
-  const AuthUser = useAuthUser();
-const [inputName, setInputName] = useState(itemData.name);
-const [inputDate, setInputDate] = useState(itemData.date);
+const AuthUser = useAuthUser();
+
+const [inputFirstName, setInputFirstName] = useState(itemData.firstname);
+const [inputLastName, setInputLastName] = useState(itemData.lastname);
+const [inputAddress, setInputAddress] = useState(itemData.address);
+const [inputNumber, setInputNumber] = useState(itemData.number);
 const [statusMsg, setStatusMsg] = useState('');
 
 const sendData = async () => {
   try {
     console.log("sending!");
     // try to update doc
-    const docref = await firebase.firestore().collection("events").doc(itemData.id);
+    const docref = await firebase.firestore().collection("contacts").doc(itemData.id);
     const doc = docref.get();
 
     if (!doc.empty) {
       docref.update(
         {
-          name: inputName,
-          date: firebase.firestore.Timestamp.fromDate( new Date(inputDate) )
+          firstName: inputFirstName,
+          lastName: inputLastName,
+          address: inputAddress,
+          number: inputNumber,
 
         }
       );
@@ -49,6 +52,7 @@ const sendData = async () => {
     console.log(error);
   }
 }
+
 return (
   <>
     <NewHeader
@@ -60,9 +64,10 @@ return (
           pointerEvents="none"
           children={<AddIcon color="gray.300" />}
         />
-        <Input type="text" value={inputName} onChange={(e) => setInputName(e.target.value)} placeholder="Event Name" />
-        <Input type="text" value={inputDate} onChange={(e) => setInputDate(e.target.value)} placeholder="Event Date" />
-        
+        <Input type="text" value={inputFirstName} onChange={(e) => setInputFirstName(e.target.value)} placeholder="Contact First Name" />
+        <Input type="text" value={inputLastName} onChange={(e) => setInputLastName(e.target.value)} placeholder="Contact Last Name" />
+        <Input type="text" value={inputAddress} onChange={(e) => setInputAddress(e.target.value)} placeholder="Contact Address" />
+        <Input type="text" value={inputNumber} onChange={(e) => setInputNumber(e.target.value)} placeholder="Contact Number" />
         <Button
           ml={2}
           onClick={() => sendData()}
@@ -78,26 +83,29 @@ return (
 );
 };
 
-export const getServerSideProps = withAuthUserTokenSSR ({
-    whenUnauthed: AuthAction.REDIRECT_TO_LOGIN,
-  })
-  (
+export const getServerSideProps = withAuthUserTokenSSR(
+  {
+    whenUnauthed: AuthAction.REDIRECT_TO_LOGIN
+  }
+)(
   async ({ AuthUser, params }) => {
-    // take this is id parameter from the url and construct a db query with it
+    // take the id parameter from the url and construct a db query with it
     const db = getFirebaseAdmin().firestore();
-    const doc = await db.collection("events").doc(params.id).get();
-
+    const doc = await db.collection("contacts").doc(params.id).get();
     let itemData;
     if (!doc.empty) {
+      // document was found
       let docData = doc.data();
       itemData = {
         id: doc.id,
-        name: docData.name,
-        date: docData.date.toDate().toDateString()
+        firstName: docData.firstName,
+        lastName: docData.lastName,
+        address: docData.address,
+        number: docData.number,
       };
     } else {
       // no document found
-      itemDate = null;
+      itemData = null;
     }
     // return the data
     return {
@@ -108,7 +116,9 @@ export const getServerSideProps = withAuthUserTokenSSR ({
   }
 )
 
-export default withAuthUser({
+export default withAuthUser(
+  {
     whenUnauthedAfterInit: AuthAction.REDIRECT_TO_LOGIN,
     whenUnauthedBeforeInit: AuthAction.REDIRECT_TO_LOGIN
-  })(SingleEvent)
+  }
+)(SingleEvent)

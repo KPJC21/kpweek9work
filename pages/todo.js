@@ -10,7 +10,7 @@ import {
     IconButton,
     Divider,
 } from "@chakra-ui/react"
-import { AddIcon, DeleteIcon, StarIcon } from "@chakra-ui/icons"
+import { AddIcon, DeleteIcon, StarIcon, EditIcon } from "@chakra-ui/icons"
 import {
     useAuthUser,
     withAuthUser,
@@ -20,24 +20,43 @@ import {
 import getAbsoluteURL from '../utils/getAbsoluteURL'
 import firebase from 'firebase/app'
 import 'firebase/firestore'
+import NewHeader from '../components/NewHeader'
+import DarkModeSwitch from '../components/DarkModeSwitch'
 
 // imports here
 
 const Todo = () => {
-  const AuthUser = useAuthUser();
-  const [input, setInput] = useState('')
-const [todos, setTodos] = useState([])  
+  const AuthUser = useAuthUser()
+  const [inputTodo, setTodo] = useState('')
+  const [todos, setTodos] = useState([])
 
-useEffect(() => {
-  AuthUser.id &&
-     firebase
-       .firestore()
-       .collection(AuthUser.id)
-       .orderBy('timestamp', 'desc')
-       .onSnapshot(snapshot => {
-        setTodos(snapshot.docs.map(doc => doc.data().todo))
-                })
-    })
+
+  useEffect(() => {
+      AuthUser.id &&
+          firebase
+              .firestore()
+              .collection("todos")
+              .where('user', '==', AuthUser.id)
+              .onSnapshot(
+              
+                snapshot => {
+                  setTodos(snapshot.docs.map(
+                    doc => {
+                      return  {
+                        todoID: doc.id, 
+                        todo: doc.data().todo
+                      }
+                      
+
+                    }
+                    
+              )
+              
+              
+  );
+}
+)
+})
 
 
 const sendData = () => {
@@ -45,23 +64,44 @@ const sendData = () => {
    // try to update doc
     firebase
       .firestore()
-      .collection(AuthUser.id) // each user will have their own collection
+      .collection("todos") // each user will have their own collection
       .doc(input) // set the collection name to the input so that we can easily delete it later on
         .set({
-        todo: input,
+        todo: inputTodo,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        user: AuthUser.id,
         })
-          .then(console.log('Data was successfully sent to cloud firestore!'))
+          .then(console.log('Data was successfully sent to cloud firestore!'));
+          setTodo('');
+
         } catch (error) {
             console.log(error)
         }
+    }
+
+    const updateTodo = async (item) => {
+      try {
+        const docref = await firebase.firestore().collection("todos").doc(item.id);
+        const doc = docref.get();
+      if (!doc.empty) {
+        docref.update(
+          {
+            todo: inputTodo,
+
+          }
+        );
+        console.log("Todo has been updated!");
+      }
+      } catch(error) {
+        console.log(error)
+      }
     }
 
     const deleteTodo = (t) => {
         try {
             firebase
              .firestore()
-             .collection(AuthUser.id)
+             .collection("todos")
              .doc(t)
              .delete()
              .then(console.log('Data was successfully deleted!'))
@@ -71,11 +111,16 @@ const sendData = () => {
     }
     
     return (
+      <>
+      <NewHeader
+      email={AuthUser.email} 
+      signOut={AuthUser.signOut} />
+       <Heading p={7} bgGradient="linear(to-l, #1418f5, #4548e6)"
+                bgClip="text" align="center" fontSize={{ base: "20px", md: "30px", lg: "70px" }}>Welcome, {AuthUser.email}!</Heading>
       <Flex flexDir="column" maxW={800} align="center" justify="center" minH="100vh" m="auto" px={4}>
         <Flex justify="space-between" w="100%" align="center">
-          <Heading mb={4}>Welcome, {AuthUser.email}!</Heading>
           <Flex>
-            
+          <DarkModeSwitch />
             <IconButton ml={2} onClick={AuthUser.signOut} icon={<StarIcon />} />
           </Flex>
         </Flex>
@@ -85,7 +130,7 @@ const sendData = () => {
             pointerEvents="none"
             children={<AddIcon color="gray.300" />}
         />
-        <Input type="text" onChange={(e) => setInput(e.target.value)} placeholder="Learn Chakra-UI & Next.js" />
+        <Input type="text" onChange={(e) => setInput(e.target.value)} placeholder="Put in your new todo" />
         <Button
             ml={2}
             onClick={() => sendData()}
@@ -110,12 +155,14 @@ const sendData = () => {
                   <Text fontSize="xl" mr={4}>{i + 1}.</Text>
                   <Text>{t}</Text>
                 </Flex>
+                
                 <IconButton onClick={() => deleteTodo(t)} icon={<DeleteIcon />} />
               </Flex>
             </React.Fragment>
           )
         })}
       </Flex>
+      </>
     )
 }
 
