@@ -10,6 +10,11 @@ import {
     IconButton,
     Divider,
     Link,
+    Container,
+    Header,
+    List,
+    ListItem,
+    Stack,
 } from "@chakra-ui/react";
 import { AddIcon, DeleteIcon, StarIcon, CalendarIcon, PhoneIcon, EditIcon } from "@chakra-ui/icons"
 import { useAuthUser, withAuthUser, withAuthUserTokenSSR, AuthAction } from 'next-firebase-auth';
@@ -18,16 +23,42 @@ import firebase from 'firebase/app';
 import 'firebase/firestore';
 import NewHeader from '../../components/NewHeader';
 
-const SingleTEvent = ({itemData}) => {
+const SingleEvent = ({itemData}) => {
     const AuthUser = useAuthUser();
-    const [inputTodo, setTodo] = useState('')
+    const [inputTodo, setTodo] = useState(itemData.todo)
+    const [statusMsg, setStatusMsg] = useState('');
     const [todos, setTodos] = useState([])
+    
+
+    const sendData = async () => {
+      try {
+        console.log("sending!");
+        // try to update doc
+        const docref = await firebase.firestore().collection("todos").doc(itemData.id);
+        const doc = docref.get();
+    
+        if (!doc.empty) {
+          docref.update(
+            {
+              todo: inputTodo,
+    
+            }
+          );
+          setStatusMsg("Updated!");
+        }
+    
+      } catch (error) {
+        console.log(error);
+      }
+    }
 
     return (
 
-      <Container maxWidth="container.xl" alignItems="center" py={[0, 10, 20]}>
-         <Header email={AuthUser.email} signOut={AuthUser.signOut} />
-         <Flex h={{base: 'auto',  sm: 'auto', md:'auto'}} justifyContent="space-between" alignItems="center"direction={{base: 'column-reverse', md: 'row'}}>
+      <>
+         <NewHeader
+      email={AuthUser.email} 
+      signOut={AuthUser.signOut} />
+         <Flex flexDir="column" maxW={800} align="center" justify="start" minH="100vh" m="auto" px={4} py={3}>
                            <Flex align="center">
                              
                                <List  style={{ marginLeft: '.5rem' }}>
@@ -43,16 +74,14 @@ const SingleTEvent = ({itemData}) => {
              <AddIcon color="gray.300" />
              <Input fontSize={{ base: "18px", md: "20px", lg: "30px" }} variant="flushed" type="first_name" value={inputTodo} onChange={(e) => setTodo(e.target.value)} placeholder="What's the todo?" />
                <Button
-                   ml={12}
-                   style={{ marginLeft: '.5rem' }}
+                  ml={2}
+                  onClick={() => sendData()}
                >
                    Update!
                </Button>
            </Stack>
            </Flex>
- 
-     </Container>
- 
+      </>
  );
  };
  export const getServerSideProps = withAuthUserTokenSSR ({
@@ -61,14 +90,14 @@ const SingleTEvent = ({itemData}) => {
      async ({ AuthUser, params }) => {
      // take this is id parameter from the url and construct a db query with it
      const db = getFirebaseAdmin().firestore();
-     const doc = await db.collection("my_todos").doc(params.id).get();
+     const doc = await db.collection("todos").doc(params.id).get();
      let itemData;
      
      if (!doc.empty) {
        let docData = doc.data();
        itemData = {
          id: doc.id,
-         todo_name: docData.todo
+         todo_name: docData.todo,
  
        };
      } else {

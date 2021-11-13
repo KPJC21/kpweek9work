@@ -31,7 +31,7 @@ import DarkModeSwitch from '../components/DarkModeSwitch'
 const Contact = () => {
   const AuthUser = useAuthUser()
   const [inputFirstName, setInputFirstName] = useState('')
-    const [inputLastName, setInputLastName] = useState('')
+  const [inputLastName, setInputLastName] = useState('')
   const [inputAddress, setInputAddress] = useState('')
   const [inputNumber, setInputNumber] = useState('')
   const [contacts, setContacts] = useState([])

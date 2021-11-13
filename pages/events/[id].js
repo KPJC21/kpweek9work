@@ -49,6 +49,7 @@ const sendData = async () => {
     console.log(error);
   }
 }
+
 return (
   <>
     <NewHeader
@@ -93,7 +94,7 @@ export const getServerSideProps = withAuthUserTokenSSR ({
       itemData = {
         id: doc.id,
         name: docData.name,
-        date: docData.date.toDate().toDateString()
+        date: new Date(docData.date.seconds * 1000).toDateString(),
       };
     } else {
       // no document found

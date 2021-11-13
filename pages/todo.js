@@ -7,6 +7,7 @@ import {
     Input,
     Button,
     Text,
+    Link,
     IconButton,
     Divider,
 } from "@chakra-ui/react"
@@ -65,8 +66,7 @@ const sendData = () => {
     firebase
       .firestore()
       .collection("todos") // each user will have their own collection
-      .doc(input) // set the collection name to the input so that we can easily delete it later on
-        .set({
+        .add({
         todo: inputTodo,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         user: AuthUser.id,
@@ -77,24 +77,6 @@ const sendData = () => {
         } catch (error) {
             console.log(error)
         }
-    }
-
-    const updateTodo = async (item) => {
-      try {
-        const docref = await firebase.firestore().collection("todos").doc(item.id);
-        const doc = docref.get();
-      if (!doc.empty) {
-        docref.update(
-          {
-            todo: inputTodo,
-
-          }
-        );
-        console.log("Todo has been updated!");
-      }
-      } catch(error) {
-        console.log(error)
-      }
     }
 
     const deleteTodo = (t) => {
@@ -130,7 +112,7 @@ const sendData = () => {
             pointerEvents="none"
             children={<AddIcon color="gray.300" />}
         />
-        <Input type="text" onChange={(e) => setInput(e.target.value)} placeholder="Put in your new todo" />
+        <Input type="text" onChange={(e) => setTodo(e.target.value)} placeholder="Put in your new todo" />
         <Button
             ml={2}
             onClick={() => sendData()}
@@ -153,10 +135,13 @@ const sendData = () => {
               >
                 <Flex align="center">
                   <Text fontSize="xl" mr={4}>{i + 1}.</Text>
-                  <Text>{t}</Text>
+                  <Text>{t.todo}</Text>
                 </Flex>
                 
-                <IconButton onClick={() => deleteTodo(t)} icon={<DeleteIcon />} />
+                <IconButton onClick={() => deleteTodo(t.todoID)} icon={<DeleteIcon />} />
+                <Link href={"/todos/" + t.todoID}>
+                              <EditIcon />
+                            </Link>
               </Flex>
             </React.Fragment>
           )

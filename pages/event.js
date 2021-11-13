@@ -50,7 +50,7 @@ const Event = () => {
                   return {
                     eventID: doc.id,
                     eventName: doc.data().name,
-                    eventDate: doc.data().date,
+                    eventDate: doc.data().date
                   }
                 }
               )
@@ -107,7 +107,8 @@ const Event = () => {
       console.log(error)
     }
   }
-
+ console.log(inputName);
+ console.log(inputDate);
   return (
     <Container maxWidth="container.xl" alignItems="center" py={[0, 10, 20]}>
       <NewHeader
@@ -139,6 +140,9 @@ const Event = () => {
           </Stack>
 
           {events.map((item, i) => {
+            console.log(item.eventName);
+            console.log(new Date(item.eventDate.seconds * 1000));
+            item.eventDate = new Date(item.eventDate.seconds * 1000).toDateString();
                   return (
                       <React.Fragment  key={i}>
                           {i > 0 && <Divider />}
